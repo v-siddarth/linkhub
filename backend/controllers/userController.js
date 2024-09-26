@@ -3,7 +3,7 @@ import otpModel from "../models/otp.js";
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-const SECRET = "PILLAI";
+const SECRET = "LINKHUB";
 
 export const signup = async (req, res) => {
   const { email, username, password } = req.body;
@@ -87,7 +87,9 @@ export const verifyOTP = async (req, res) => {
       profileLink: `http://localhost:3000/${otpEntry.username}`,
     });
 
-    const token = jwt.sign({ email: result.email, id: result._id }, SECRET);
+    const token = jwt.sign({ email: result.email, id: result._id }, SECRET, {
+      expiresIn: "30d", // Set the token to expire in 30 days
+    });
 
     // Delete OTP after verification
     await otpModel.deleteOne({ email: email });
