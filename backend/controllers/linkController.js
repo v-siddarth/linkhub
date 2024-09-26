@@ -1,6 +1,6 @@
 import Category from "../models/category.js";
 import User from "../models/user.js";
-import Link from "./../models/link";
+import Link from "./../models/link.js";
 
 export const addLinks = async (req, res) => {
   const userId = req.userId; // Get user ID from the request

@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "", // default placeholder image URL
   },
+  profileLink: {
+    type: String,
+    default: "", // default placeholder profile link URL
+  },
   categories: [
     {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,6 +1,8 @@
+import { sendOTPEmail } from "../helpers/email_sender.js";
 import otpModel from "../models/otp.js";
 import User from "../models/user.js";
-
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 const SECRET = "PILLAI";
 
 export const signup = async (req, res) => {
@@ -10,7 +12,11 @@ export const signup = async (req, res) => {
     const existingUser = await User.findOne({
       $or: [{ username }, { email }],
     });
-
+    if (existingUser) {
+      return res.json({
+        message: "User already exists",
+      });
+    }
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiration = Date.now() + 10 * 60 * 1000;
@@ -24,7 +30,7 @@ export const signup = async (req, res) => {
       password: hashedPassword,
       username,
     });
-    console.log("otp for mail is " + otp + " " + email);
+    // console.log("otp for mail is " + otp + " " + email);
     // Send OTP via email
     await sendOTPEmail(email, otp);
 
@@ -78,6 +84,7 @@ export const verifyOTP = async (req, res) => {
       email: email,
       password: otpEntry.password, // Use the stored hashed password
       username: otpEntry.username,
+      profileLink: `http://localhost:3000/${otpEntry.username}`,
     });
 
     const token = jwt.sign({ email: result.email, id: result._id }, SECRET);
@@ -123,4 +130,8 @@ export const resendOTP = async (req, res) => {
       .status(500)
       .json({ message: "Failed to resend OTP. Please try again." });
   }
+};
+export const getUserProfile = async (req, res) => {
+  const { username } = req.params;
+  const user = User.findOne(username);
 };

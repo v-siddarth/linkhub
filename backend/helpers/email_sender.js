@@ -8,7 +8,7 @@ export const generateOTP = () => {
 
 // Function to send OTP via email
 export const sendOTPEmail = async (email, otp) => {
-  console.log("Opt and email : " + otp + " " + email);
+  console.log("Otp and email : " + otp + " " + email);
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
