@@ -1,6 +1,7 @@
 import Category from "../models/category.js";
 import User from "../models/user.js";
 import Link from "./../models/link.js";
+import { mongoose } from "mongoose";
 
 export const addLinks = async (req, res) => {
   const userId = req.userId; // Get user ID from the request
@@ -51,6 +52,27 @@ export const addLinks = async (req, res) => {
     res.status(201).json({ message: "Links added successfully", category });
   } catch (error) {
     console.error(error); // Log any errors
+    res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
+  }
+};
+export const getProfile = async (req, res) => {
+  const username = req.params.username;
+  try {
+    const user = await User.findOne({ username }).populate({
+      path: "categories",
+      populate: {
+        path: "links",
+        // select:'url title description'
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({ user });
+  } catch (error) {
     res
       .status(500)
       .json({ message: "An error occurred", error: error.message });
