@@ -3,6 +3,8 @@ import otpModel from "../models/otp.js";
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import QrCode from "qrcode";
+import cloudinary from "../helpers/cloudinary.js";
 const SECRET = "LINKHUB";
 
 export const signup = async (req, res) => {
@@ -79,14 +81,23 @@ export const verifyOTP = async (req, res) => {
       return res.status(400).json({ message: "OTP expired" });
     }
 
+    const profileLink = `http://localhost:3000/${otpEntry.username}`;
     // OTP is valid, create the user using stored password
     const result = await User.create({
       email: email,
       password: otpEntry.password, // Use the stored hashed password
       username: otpEntry.username,
-      profileLink: `http://localhost:3000/${otpEntry.username}`,
+      profileLink: profileLink, // Generate a profile link for the user
     });
-
+    const qrCodeDataUrl = await QrCode.toDataURL(profileLink);
+    const cloudinaryResponse = await cloudinary.uploader.upload(qrCodeDataUrl, {
+      folder: "profile_qr_code",
+      public_id: `profile_qr_codes/${otpEntry.username}`, // Optional: Organize images in a specific folder
+      resource_type: "image",
+      overwrite: true,
+    });
+    result.qrprofileLink = cloudinaryResponse.secure_url;
+    await result.save();
     const token = jwt.sign({ email: result.email, id: result._id }, SECRET, {
       expiresIn: "30d", // Set the token to expire in 30 days
     });

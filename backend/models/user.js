@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "", // default placeholder profile link URL
   },
+  qrprofileLink: {
+    type: String,
+    default: "", // default placeholder QR profile link URL
+  },
   categories: [
     {
       type: mongoose.Schema.Types.ObjectId,
