@@ -13,6 +13,12 @@ connectDB();
 app.use("/users", userRouter);
 app.use("/my", linkRouter);
 app.get("/:username", getProfile);
+
+app.get("/addy/check-ip", (req, res) => {
+  const clientIp = req.ip; // Get the client's IP address
+  console.log("Client IP:", clientIp); // Log the IP to the console
+  res.send(`Your IP address is: ${clientIp}`);
+});
 app.listen(port, () => {
   console.log(`Server is running on port http://localhost:${port}`);
 });

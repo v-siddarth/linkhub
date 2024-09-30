@@ -78,13 +78,13 @@ export const getProfile = async (req, res) => {
 };
 // Increment clicks on a link
 export const trackLinkClick = async (req, res) => {
-  const { linkId } = req.params;
+  const linkId = req.params.linkId;
 
   try {
-    // Find the link and increment the click count
+    // Find the link by ID and increment the clicks count
     const link = await Link.findByIdAndUpdate(
       linkId,
-      { $inc: { clicks: 1 } }, // Increment the clicks by 1
+      { $inc: { clicks: 1 } },
       { new: true }
     );
 
@@ -92,14 +92,16 @@ export const trackLinkClick = async (req, res) => {
       return res.status(404).json({ message: "Link not found" });
     }
 
-    res.status(200).json({ message: "Click tracked successfully", link });
+    // Redirect to the actual URL after tracking
+    return res.redirect(link.url);
   } catch (error) {
     console.error(error);
     res
       .status(500)
-      .json({ message: "Error tracking click", error: error.message });
+      .json({ message: "An error occurred", error: error.message });
   }
 };
+
 export const getUserLinksWithCategories = async (req, res) => {
   const userId = req.userId;
 
