@@ -1,3 +1,4 @@
+import cloudinary from "../helpers/cloudinary.js";
 import Category from "../models/category.js";
 import User from "../models/user.js";
 import Link from "./../models/link.js";
@@ -126,6 +127,66 @@ export const getUserLinksWithCategories = async (req, res) => {
       message: "User categories and links retrieved successfully",
       categories,
     });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
+  }
+};
+
+export const addCoverImageToLink = async (req, res) => {
+  const userId = req.userId;
+  const linkId = req.params.linkId;
+  const file = req.file;
+
+  try {
+    // Check if a file was provided
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+
+    // Upload the image to Cloudinary
+    let coverImage = "";
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.v2.uploader
+        .upload_stream(
+          {
+            folder: "link_cover_images",
+            resource_type: "auto",
+          },
+          (error, result) => {
+            if (error) {
+              reject(new Error(error.message));
+            } else {
+              resolve(result);
+            }
+          }
+        )
+        .end(file.buffer); // Pass the buffer to Cloudinary
+    });
+    coverImage = uploadResult.secure_url; // Save the image URL
+
+    // Find the link and update with the cover image URL
+    const link = await Link.findById(linkId);
+
+    if (!link) {
+      return res.status(404).json({ message: "Link not found" });
+    }
+
+    // Ensure that the link belongs to the user
+    const category = await Category.findOne({ links: linkId, user: userId });
+    if (!category) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to edit this link" });
+    }
+
+    // Set the cover image URL
+    link.coverImage = coverImage;
+    await link.save();
+
+    res.status(200).json({ message: "Cover image added successfully", link });
   } catch (error) {
     console.error(error);
     res
