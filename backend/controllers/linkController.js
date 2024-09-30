@@ -284,3 +284,82 @@ export const deleteCategory = async (req, res) => {
       .json({ message: "An error occurred", error: error.message });
   }
 };
+export const updateLink = async (req, res) => {
+  const userId = req.userId; // Assume this comes from authentication middleware
+  const linkId = req.params.linkId;
+  const { url, title, description, categoryId } = req.body; // Fields to update
+  const file = req.file; // Uploaded file
+
+  try {
+    // Find the link and ensure it belongs to the user
+    const link = await Link.findById(linkId);
+    if (!link) {
+      return res.status(404).json({ message: "Link not found" });
+    }
+
+    // Ensure the link belongs to the user
+    if (link.user.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to edit this link" });
+    }
+
+    // Update the link details
+    if (url) link.url = url;
+    if (title) link.title = title;
+    if (description) link.description = description;
+
+    // Update the category if needed
+    if (categoryId) {
+      // Find the current category containing the link
+      const currentCategory = await Category.findOne({ links: linkId });
+      if (currentCategory) {
+        // Remove the link from the current category
+        currentCategory.links = currentCategory.links.filter(
+          (link) => link.toString() !== linkId
+        );
+        await currentCategory.save();
+      }
+
+      // Add the link to the new category
+      const newCategory = await Category.findById(categoryId);
+      if (!newCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      newCategory.links.push(linkId);
+      await newCategory.save();
+    }
+
+    // Update the cover image if a new file is provided
+    if (file) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.v2.uploader
+          .upload_stream(
+            {
+              folder: "link_cover_images",
+              resource_type: "auto",
+            },
+            (error, result) => {
+              if (error) {
+                reject(new Error(error.message));
+              } else {
+                resolve(result);
+              }
+            }
+          )
+          .end(file.buffer);
+      });
+      link.coverImage = uploadResult.secure_url; // Save the image URL
+    }
+
+    // Save the updated link
+    await link.save();
+
+    res.status(200).json({ message: "Link updated successfully", link });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
+  }
+};
