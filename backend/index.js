@@ -4,6 +4,7 @@ import { connectDB } from "./dbConnect.js";
 import userRouter from "./routes/userRoutes.js";
 import linkRouter from "./routes/linkRoutes.js";
 import { getProfile } from "./controllers/linkController.js";
+// import "./helpers/cron.js";
 const port = 3000;
 const app = express();
 app.use(cors());

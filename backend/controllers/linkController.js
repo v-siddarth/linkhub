@@ -4,8 +4,9 @@ import Link from "./../models/link.js";
 import { mongoose } from "mongoose";
 
 export const addLinks = async (req, res) => {
-  const userId = req.userId; // Get user ID from the request
-  const { links, categoryName } = req.body; // Expecting links array and category name
+  const userId = req.userId;
+  const { links, categoryName } = req.body;
+  const file = req.file;
 
   try {
     // Find the user
@@ -19,44 +20,41 @@ export const addLinks = async (req, res) => {
       name: categoryName || "General",
       user: userId,
     });
-
     if (!category) {
       category = new Category({
         name: categoryName || "General",
         user: userId,
       });
-      await category.save(); // Save new category
-    }
-
-    // Loop through the array of links and add them to the category
-    const linkIds = []; // Array to store created link IDs
-    for (const linkData of links) {
-      const { url, title, description } = linkData; // Destructure link data
-
-      const link = new Link({ url, title, description }); // Create new link
-      await link.save(); // Save the link to the database
-      linkIds.push(link._id); // Store the link ID
+      await category.save();
     }
 
     // Add links to the category
-    category.links.push(...linkIds); // Push all link IDs into the category's links array
-    await category.save(); // Save the updated category
+    const linkIds = [];
+    for (const linkData of links) {
+      const { url, title, description, startDate, endDate } = linkData;
 
-    // Update the user to reference the new category if it wasn't already
-    if (!user.categories.includes(category._id)) {
-      user.categories.push(category._id);
-      await user.save(); // Save the updated user
+      const link = new Link({ url, title, description, startDate, endDate });
+      await link.save();
+      linkIds.push(link._id);
     }
 
-    // Respond with success
+    category.links.push(...linkIds);
+    await category.save();
+
+    if (!user.categories.includes(category._id)) {
+      user.categories.push(category._id);
+      await user.save();
+    }
+
     res.status(201).json({ message: "Links added successfully", category });
   } catch (error) {
-    console.error(error); // Log any errors
+    console.error(error);
     res
       .status(500)
       .json({ message: "An error occurred", error: error.message });
   }
 };
+
 export const getProfile = async (req, res) => {
   const username = req.params.username;
   try {
@@ -73,6 +71,61 @@ export const getProfile = async (req, res) => {
     }
     res.status(200).json({ user });
   } catch (error) {
+    res
+      .status(500)
+      .json({ message: "An error occurred", error: error.message });
+  }
+};
+// Increment clicks on a link
+export const trackLinkClick = async (req, res) => {
+  const { linkId } = req.params;
+
+  try {
+    // Find the link and increment the click count
+    const link = await Link.findByIdAndUpdate(
+      linkId,
+      { $inc: { clicks: 1 } }, // Increment the clicks by 1
+      { new: true }
+    );
+
+    if (!link) {
+      return res.status(404).json({ message: "Link not found" });
+    }
+
+    res.status(200).json({ message: "Click tracked successfully", link });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error tracking click", error: error.message });
+  }
+};
+export const getUserLinksWithCategories = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    // Find the user
+    const user = await User.findById(userId).populate({
+      path: "categories",
+      populate: {
+        path: "links",
+        model: "Link",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Retrieve the categories with populated links
+    const categories = user.categories;
+
+    res.status(200).json({
+      message: "User categories and links retrieved successfully",
+      categories,
+    });
+  } catch (error) {
+    console.error(error);
     res
       .status(500)
       .json({ message: "An error occurred", error: error.message });
