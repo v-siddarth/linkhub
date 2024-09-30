@@ -10,6 +10,7 @@ const linkSchema = new mongoose.Schema({
   startDate: { type: Date, default: null }, // Optional start date for scheduling
   endDate: { type: Date, default: null }, // Optional end date for scheduling
   clicks: { type: Number, default: 0 }, // New field to track clicks
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Reference to the User model
 
   createdAt: { type: Date, default: Date.now },
 });

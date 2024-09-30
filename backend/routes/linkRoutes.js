@@ -2,6 +2,8 @@ import express from "express";
 import {
   addCoverImageToLink,
   addLinks,
+  deleteCategory,
+  deleteLink,
   getUserLinksWithCategories,
   trackLinkClick,
 } from "../controllers/linkController.js";
@@ -12,6 +14,8 @@ const linkRouter = express.Router();
 
 linkRouter.post("/add-links", auth, addLinks);
 linkRouter.post("/clicks/:linkId", clickLimiter, trackLinkClick);
+linkRouter.delete("/deleteLink/:linkId", auth, deleteLink);
+linkRouter.delete("/deleteCategory/:categoryId", auth, deleteCategory);
 linkRouter.get("/links", auth, getUserLinksWithCategories);
 linkRouter.post(
   "/:linkId/cover-image",
