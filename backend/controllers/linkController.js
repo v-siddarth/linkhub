@@ -99,9 +99,15 @@ export const trackLinkClick = async (req, res) => {
     if (!link) {
       return res.status(404).json({ message: "Link not found" });
     }
-
+    let redirectUrl = link.url;
+    if (
+      !redirectUrl.startsWith("http://") &&
+      !redirectUrl.startsWith("https://")
+    ) {
+      redirectUrl = "http://" + redirectUrl; // Default to http if no protocol is specified
+    }
     // Redirect to the actual URL after tracking
-    return res.redirect(link.url);
+    return res.redirect(redirectUrl);
   } catch (error) {
     console.error(error);
     res
@@ -361,5 +367,28 @@ export const updateLink = async (req, res) => {
     res
       .status(500)
       .json({ message: "An error occurred", error: error.message });
+  }
+};
+export const getTrendingLinks = async (req, res) => {
+  try {
+    // Retrieve links sorted by number of clicks in descending order
+    const trendingLinks = await Link.find()
+      .sort({ clicks: -1 })
+      .limit(10)
+      .populate({
+        path: "user",
+        select: "username profileImgUrl", // Retrieve only username and profileImgUrl from User
+      });
+
+    // Send the trending links as response
+    res.status(200).json(trendingLinks);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({
+        message: "An error occurred while retrieving trending links",
+        error: error.message,
+      });
   }
 };
