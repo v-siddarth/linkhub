@@ -17,7 +17,7 @@ const linkRouter = express.Router();
 linkRouter.post("/add-links", auth, addLinks);
 linkRouter.post("/clicks/:linkId", clickLimiter, trackLinkClick);
 linkRouter.get("/trending", getTrendingLinks);
-linkRouter.put("/update/:linkId", updateLink);
+linkRouter.put("/update/:linkId", auth, updateLink);
 
 linkRouter.delete("/deleteLink/:linkId", auth, deleteLink);
 linkRouter.delete("/deleteCategory/:categoryId", auth, deleteCategory);
